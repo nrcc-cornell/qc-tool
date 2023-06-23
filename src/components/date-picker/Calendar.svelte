@@ -86,6 +86,7 @@
   
     <div class="row">
       {#each cells as { allowed, value } (uuid())}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
           on:click={allowed && value ? onChange.bind(this, value) : noop}
           class:cell={true}
