@@ -28,6 +28,7 @@
 	"type": "module",
 	"dependencies": {
 		"leaflet": "^1.9.4",
+		"svelte-collapsible": "^0.2.2",
 		"svelte-materialify": "^0.3.11"
 	}
 }

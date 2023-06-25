@@ -1,6 +1,6 @@
 <script>
 	// @ts-nocheck
-	import QCBoxList from '../components/QCBoxList.svelte';
+	import QCBoxList from '../components/qc-cards/QCBoxList.svelte';
 
 	import DatePicker from '../components/date-picker/DatePicker.svelte';
 
@@ -122,7 +122,6 @@
 	}
 
 	let markerLayers;
-	let lineLayers;
 	function mapAction(container) {
 		map = createMap(container);
 		let newLocation = [];
@@ -140,6 +139,7 @@
 			destroy: () => {
 				map.remove();
 				map = null;
+				markerLocations = [];
 			}
 		};
 	}
@@ -173,7 +173,7 @@
 	<div class="card-map-container">
 		<QCBoxList {data} />
 
-		<div style="height:50rem;width:80%" use:mapAction />
+		<div style="height:50rem;width:60%" use:mapAction />
 	</div>
 {/await}
 
