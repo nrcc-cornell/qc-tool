@@ -1,5 +1,6 @@
 <script>
-	// @ts-nocheck
+	import { DateInput } from 'date-picker-svelte';
+
 	import QCBoxList from '../components/qc-cards/QCBoxList.svelte';
 
 	import DatePicker from '../components/date-picker/DatePicker.svelte';
@@ -9,6 +10,8 @@
 	import MarkerPopup from '../components/map/MarkerPopup.svelte';
 	let map;
 
+	let changesArray = [];
+
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
 
 	let dataorder = ['TX', 'TN', 'TA', 'PP'];
@@ -16,6 +19,7 @@
 	let currentDataSelected = 0;
 	$: currentDataSelected, rerenderMarkers();
 
+	let placeholderDate = new Date();
 	let currentDate = new Date();
 	let currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 	let currentDay = zeroPad(currentDate.getDate(), 2);
@@ -53,13 +57,15 @@
 
 	/* calendar functions */
 
-	const onDateChange = (d) => {
-		currentDate = d.detail;
+	const onDateChange = (newDate) => {
+		currentDate = newDate;
 		currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 		currentDay = zeroPad(currentDate.getDate(), 2);
 		currentYear = zeroPad(currentDate.getFullYear(), 4);
 		QCdata = loadData().then((data) => generateMarkers(data));
 	};
+
+	$: currentDate, onDateChange(currentDate);
 
 	/* map functions */
 
@@ -158,7 +164,13 @@
 	function mapAction(container) {
 		map = createMap(container);
 		createMarkers(map);
-
+		map.on('zoom', function () {
+			if (map.getZoom() < 7) {
+				if (map.hasLayer(multiStnMarkerLayer)) {
+					map.removeLayer(multiStnMarkerLayer);
+				}
+			}
+		});
 		return {
 			destroy: () => {
 				map.remove();
@@ -185,7 +197,6 @@
 		let newDatalabel = null;
 		multiStnMarkerLayer.clearLayers();
 		if (isZoomed) {
-			console.log('added!');
 			let multiStnMarkerData = await loadMultiStnData(coords);
 			for (let datapoint of multiStnMarkerData.data) {
 				newLocation = [datapoint.meta.ll[1], datapoint.meta.ll[0]];
@@ -203,71 +214,74 @@
 			createMarkers();
 		}
 	}
-	if (map) {
-		console.log('test');
-		map.on('zoomlevelchange', function () {
-			if (map.getZoom < 7) {
-				if (map.hasLayer(multiStnMarkerLayer)) {
-					map.removeLayer(multiStnMarkerLayer);
-					console.log('removed!');
-				}
-			}
-		});
-	}
 </script>
 
 <svelte:window on:resize={resizeMap} />
+<h2>Login will go here</h2>
+<div class="h-screen">
+	<DateInput
+		bind:value={currentDate}
+		placeholder={placeholderDate}
+		closeOnSelection={true}
+		format={'MM-dd-yyyy'}
+		max={placeholderDate}
+	/>
+	{#await QCdata}
+		<p>Loading...</p>
+	{:then data}
+		<div class="flex justify-between flex-row h-screen">
+			<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray />
+			<div style="height:40rem;width:70%;margin:2rem;">
+				<div class="flex join">
+					<input
+						class="join-item w-1/4 btn"
+						type="radio"
+						name="options"
+						aria-label="TMAX"
+						bind:group={currentDataSelected}
+						value={0}
+					/>
+					<input
+						class="join-item w-1/4 btn"
+						type="radio"
+						name="options"
+						aria-label="TMIN"
+						bind:group={currentDataSelected}
+						value={1}
+					/>
+					<input
+						class="join-item w-1/4 btn"
+						type="radio"
+						name="options"
+						aria-label="TOBS"
+						bind:group={currentDataSelected}
+						value={2}
+					/>
+					<input
+						class="join-item w-1/4 btn"
+						type="radio"
+						name="options"
+						aria-label="PRCP"
+						bind:group={currentDataSelected}
+						value={3}
+					/>
+				</div>
 
-<DatePicker
-	on:datechange={onDateChange}
-	selected={currentDate}
-	isAllowed={(date) => {
-		const millisecs = date.getTime();
-		if (millisecs > Date.now()) return false;
-		return true;
-	}}
-/>
-{#await QCdata}
-	<p>Loading...</p>
-{:then data}
-	<div class="card-map-container">
-		<QCBoxList {data} {mapFly} {currentDataSelected} />
-		<div style="height:40rem;width:70%;margin:2rem;">
-			<label>
-				<input type="radio" bind:group={currentDataSelected} name="currentDataSelected" value={0} />
-				TMAX
-			</label>
-
-			<label>
-				<input type="radio" bind:group={currentDataSelected} name="currentDataSelected" value={1} />
-				TMIN
-			</label>
-
-			<label>
-				<input type="radio" bind:group={currentDataSelected} name="currentDataSelected" value={2} />
-				TOBS
-			</label>
-			<label>
-				<input type="radio" bind:group={currentDataSelected} name="currentDataSelected" value={3} />
-				PRCP
-			</label>
-			<div style="height:40rem;width:100%;margin:0rem;" use:mapAction />
+				<div style="height:40rem;width:100%;margin:0rem;" use:mapAction />
+				{#each changesArray as change, i}
+					{#if typeof change !== 'undefined'}
+						<p>{change}</p>
+					{/if}
+				{/each}
+			</div>
 		</div>
-	</div>
-{/await}
+	{/await}
+</div>
 
 <style>
 	.card-map-container {
 		display: flex;
 		flex-direction: row;
 		justify-content: space-between;
-	}
-	.map :global(.map-marker) {
-		width: 100%;
-		text-align: center;
-		font-weight: 600;
-		background-color: #444;
-		color: #eee;
-		border-radius: 0.5rem;
 	}
 </style>
