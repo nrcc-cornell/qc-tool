@@ -92,7 +92,7 @@
 	}
 </script>
 
-<div class="overflow-scroll">
+<div class="join join-vertical w-full max-h-[60vh] overflow-y-scroll">
 	<ul>
 		<!-- <Accordion bind:key>
 		{#each data.item as { nIds, uid, elev, sId, ll, postal, data, slimit, name }, n}
@@ -127,10 +127,10 @@
 				class={typeof cardTrackerArray[n].accept !== 'undefined'
 					? cardTrackerArray[n].accept !== 'null'
 						? cardTrackerArray[n].accept
-							? 'collapse collapse-plus bg-success'
-							: 'collapse collapse-plus bg-base-200'
-						: 'collapse collapse-plus bg-base-200'
-					: 'collapse collapse-plus bg-base-200'}
+							? 'collapse collapse-arrow join-item border border-primary bg-primary-content'
+							: 'collapse collapse-arrow join-item border border-base-300 bg-base-200'
+						: 'collapse collapse-arrow join-item border border-base-300 bg-base-200'
+					: 'collapse collapse-arrow join-item border border-base-300 bg-base-200'}
 			>
 				<input type="radio" name="my-accordion-3" checked={false} on:click={setKey(ll)} />
 				<div class="collapse-title text-xl font-medium">
@@ -140,42 +140,106 @@
 					{#each data as [qcdatafigure, num1, num2], i}
 						{#if dataorder[i] == 'PP'}
 							{#if qcdatafigure > slimit.PP}
-								<p>{dataorder[i]}</p>
-								<p>{qcdatafigure + '~! (' + 0 + ', ' + slimit[dataorder[i]] + ')'}</p>
-								<div class="join">
-									<button
-										class="btn btn-success join-item"
-										on:click={() => handleAcceptReject(true, n, i, sId, data)}>Accept</button
-									>
-									<button
-										class="btn btn-error join-item"
-										on:click={() => handleAcceptReject(false, n, i, sId, data)}>Reject</button
-									>
+								<div class="flex flex-row justify-between mb-2">
+									<div>
+										<p>{dataorder[i]}</p>
+										<p>{qcdatafigure + '~! (' + 0 + ', ' + slimit[dataorder[i]] + ')'}</p>
+									</div>
+									<div>
+										<button
+											class="btn btn-circle btn-outline btn-success"
+											on:click={() => handleAcceptReject(true, n, i, sId, data)}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/></svg
+											>
+										</button>
+										<button
+											class="btn btn-circle btn-outline btn-error"
+											on:click={() => handleAcceptReject(false, n, i, sId, data)}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-6 w-6"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												><path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/></svg
+											></button
+										>
+									</div>
 								</div>
 							{:else}
 								<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>
 							{/if}
 						{:else if !slimit[dataorder[i]] || qcdatafigure < slimit[dataorder[i]][0] || qcdatafigure > slimit[dataorder[i]][1]}
-							<p>{dataorder[i]}</p>
-							<p>
-								{slimit[dataorder[i]]
-									? qcdatafigure +
-									  '~! (' +
-									  slimit[dataorder[i]][0] +
-									  ', ' +
-									  slimit[dataorder[i]][1] +
-									  ')'
-									: qcdatafigure + '~! '}
-							</p>
-							<div class="join">
-								<button
-									class="btn btn-success join-item"
-									on:click={() => handleAcceptReject(true, n, i, sId, data)}>Accept</button
-								>
-								<button
-									class="btn btn-error join-item"
-									on:click={() => handleAcceptReject(false, n, i, sId, data)}>Reject</button
-								>
+							<div class="flex flex-row justify-between mb-2">
+								<div>
+									<p>{dataorder[i]}</p>
+									<p>
+										{slimit[dataorder[i]]
+											? qcdatafigure +
+											  '~! (' +
+											  slimit[dataorder[i]][0] +
+											  ', ' +
+											  slimit[dataorder[i]][1] +
+											  ')'
+											: qcdatafigure + '~! '}
+									</p>
+								</div>
+								<div>
+									<button
+										class="btn btn-circle btn-outline btn-success"
+										on:click={() => handleAcceptReject(true, n, i, sId, data)}
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-6 w-6"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											><path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M6 18L18 6M6 6l12 12"
+											/></svg
+										>
+									</button>
+									<button
+										class="btn btn-circle btn-outline btn-error"
+										on:click={() => handleAcceptReject(false, n, i, sId, data)}
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-6 w-6"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											><path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M6 18L18 6M6 6l12 12"
+											/></svg
+										></button
+									>
+								</div>
 							</div>
 						{:else}
 							<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>
