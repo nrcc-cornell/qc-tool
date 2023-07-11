@@ -1,5 +1,6 @@
 <script>
 	import { Accordion, AccordionItem } from 'svelte-collapsible';
+	import QcAcceptReject from './QCAcceptReject.svelte';
 	export let data;
 	export let mapFly;
 	export let currentDataSelected;
@@ -145,44 +146,7 @@
 										<p>{dataorder[i]}</p>
 										<p>{qcdatafigure + '~! (' + 0 + ', ' + slimit[dataorder[i]] + ')'}</p>
 									</div>
-									<div>
-										<button
-											class="btn btn-circle btn-outline btn-success"
-											on:click={() => handleAcceptReject(true, n, i, sId, data)}
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="h-6 w-6"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												><path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M6 18L18 6M6 6l12 12"
-												/></svg
-											>
-										</button>
-										<button
-											class="btn btn-circle btn-outline btn-error"
-											on:click={() => handleAcceptReject(false, n, i, sId, data)}
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												class="h-6 w-6"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-												><path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													stroke-width="2"
-													d="M6 18L18 6M6 6l12 12"
-												/></svg
-											></button
-										>
-									</div>
+									<QcAcceptReject {handleAcceptReject} {n} {i} {sId} {data} />
 								</div>
 							{:else}
 								<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>
@@ -202,44 +166,7 @@
 											: qcdatafigure + '~! '}
 									</p>
 								</div>
-								<div>
-									<button
-										class="btn btn-circle btn-outline btn-success"
-										on:click={() => handleAcceptReject(true, n, i, sId, data)}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											><path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/></svg
-										>
-									</button>
-									<button
-										class="btn btn-circle btn-outline btn-error"
-										on:click={() => handleAcceptReject(false, n, i, sId, data)}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-											><path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/></svg
-										></button
-									>
-								</div>
+								<QcAcceptReject {handleAcceptReject} {n} {i} {sId} {data} />
 							</div>
 						{:else}
 							<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>

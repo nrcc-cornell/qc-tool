@@ -234,14 +234,14 @@
 	<div class="max-h-screen">
 		{#if loggedIn}
 			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20" id="login-container">
-				<div class="text-xl font-medium mr-10">
+				<div class="text-xl font-medium mr-10 ml-8">
 					Welcome {user.username}! Please make QC changes on the left, using the map on the right as
 					a reference. When finished, please press 'Submit'!
 				</div>
 			</div>
 		{:else}
 			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20" id="login-container">
-				<div class="text-xl font-medium mr-10">Welcome! Please Log in here:</div>
+				<div class="text-xl font-medium mr-10 ml-8">Welcome! Please Log in here:</div>
 				<input
 					type="text"
 					placeholder="Username"
