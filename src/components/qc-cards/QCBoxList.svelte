@@ -140,7 +140,7 @@
 				<div class="collapse-content">
 					{#each data as [qcdatafigure, num1, num2], i}
 						{#if dataorder[i] == 'PP'}
-							{#if qcdatafigure > slimit.PP}
+							{#if num1 == 554008576 || num1 == 545259520 || num1 == 537133056 || num1 == 554009600 || num1 == 553911296}
 								<div class="flex flex-row justify-between mb-2">
 									<div>
 										<p>{dataorder[i]}</p>
@@ -151,7 +151,7 @@
 							{:else}
 								<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>
 							{/if}
-						{:else if !slimit[dataorder[i]] || qcdatafigure < slimit[dataorder[i]][0] || qcdatafigure > slimit[dataorder[i]][1]}
+						{:else if num1 == 554008576 || num1 == 545259520 || num1 == 537133056 || num1 == 554009600 || num1 == 553911296}
 							<div class="flex flex-row justify-between mb-2">
 								<div>
 									<p>{dataorder[i]}</p>

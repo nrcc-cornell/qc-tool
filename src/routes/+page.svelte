@@ -8,6 +8,7 @@
 	import MarkerPopup from '../components/map/MarkerPopup.svelte';
 	let map;
 
+	let allChangesArray = {};
 	let changesArray = [];
 
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
@@ -22,6 +23,8 @@
 	let currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 	let currentDay = zeroPad(currentDate.getDate(), 2);
 	let currentYear = zeroPad(currentDate.getFullYear(), 4);
+
+	$: changesArray, (allChangesArray[currentDate.toDateString()] = changesArray);
 
 	let loggedIn = false;
 	let user = {
@@ -63,10 +66,17 @@
 	/* calendar functions */
 
 	const onDateChange = (newDate) => {
+		if (allChangesArray[currentDate] == []) {
+			delete allChangesArray[currentDate];
+			console.log(allChangesArray);
+		}
 		currentDate = newDate;
 		currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 		currentDay = zeroPad(currentDate.getDate(), 2);
 		currentYear = zeroPad(currentDate.getFullYear(), 4);
+		if (typeof allChangesArray[currentDate] == undefined) {
+			allChangesArray[currentDate] = [];
+		}
 		QCdata = loadData().then((data) => generateMarkers(data));
 	};
 
@@ -233,14 +243,14 @@
 <html data-theme="light" lang="html">
 	<div class="max-h-screen">
 		{#if loggedIn}
-			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20" id="login-container">
+			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
 				<div class="text-xl font-medium mr-10 ml-8">
 					Welcome {user.username}! Please make QC changes on the left, using the map on the right as
 					a reference. When finished, please press 'Submit'!
 				</div>
 			</div>
 		{:else}
-			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20" id="login-container">
+			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
 				<div class="text-xl font-medium mr-10 ml-8">Welcome! Please Log in here:</div>
 				<input
 					type="text"
@@ -249,7 +259,7 @@
 					bind:value={user.username}
 				/>
 				<input
-					type="text"
+					type="password"
 					placeholder="Password"
 					class="input input-bordered w-full max-w-xs mx-2"
 					bind:value={user.password}
@@ -270,19 +280,13 @@
 		<div class="flex flex-row grow" id="main-content-container">
 			<div class="ml-4 shrink overflow-y-hidden basis-1/4" id="cal-cards-container">
 				<div class="m-4 card card-normal bg-base-100 shadow-xl" id="cal-container">
-					<DatePicker bind:value={currentDate} max={placeholderDate} style="border-radius:1rem;" />
+					<DatePicker bind:value={currentDate} max={placeholderDate} />
 				</div>
 				{#await QCdata}
 					<span class="loading loading-spinner loading-lg" />
 				{:then data}
 					<div class="m-4 card card-normal bg-base-100 shadow-xl" id="qc-list-container">
-						<QCBoxList
-							class="m-4 overflow-auto"
-							{data}
-							{mapFly}
-							{currentDataSelected}
-							bind:changesArray
-						/>
+						<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray />
 					</div>
 				{/await}
 			</div>
@@ -334,7 +338,7 @@
 				</div>
 				<div class="m-4 card lg:card-side bg-base-100 shadow-xl" id="changes-container">
 					<button
-						class={Object.values(changesArray).length == 0
+						class={Object.values(changesArray).length == 0 || !loggedIn
 							? 'btn w-full btn-primary btn-disabled'
 							: 'btn w-full btn-primary'}
 						onclick="my_modal_1.showModal()">Submit</button
@@ -342,14 +346,18 @@
 					<dialog id="my_modal_1" class="modal">
 						<form method="dialog" class="modal-box">
 							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-							<h3 class="font-bold text-lg">
+							<h3 class="text-2xl font-bold text-gray-900 dark:text-white pb-2">
 								Are you sure you would like to submit the following changes:
-								{console.log(changesArray)}
 							</h3>
-							{#each changesArray as change, i}
-								{#if typeof change !== 'undefined'}
-									<p class="py-4">{change}</p>
-								{/if}
+							{#each Object.entries(allChangesArray) as [date, changes], i}
+								<h2 class="text-xl font-semibold text-gray-900 dark:text-white pb-2">
+									{date}
+								</h2>
+								{#each changes as change, i}
+									{#if typeof change !== 'undefined'}
+										<p class="text-base text-gray-900 dark:text-white">{change}</p>
+									{/if}
+								{/each}
 							{/each}
 							<div class="modal-action">
 								<!-- if there is a button in form, it will close the modal -->
