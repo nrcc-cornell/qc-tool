@@ -12,7 +12,26 @@
 
 	let cardTrackerArray = Array(data.item.length);
 
-	changesArray = Array(data.item.length);
+	if (changesArray.length != data.item.length) {
+		if (changesArray.length != 0) {
+			alert(
+				'Station data for this date has changed between your last load of this date and now. Your changes have been reset for this date. Please input them again.'
+			);
+		}
+		changesArray = Array(data.item.length);
+	} else {
+		for (let i = 0; i < changesArray.length; i++) {
+			if (changesArray[i] != undefined) {
+				cardTrackerArray[i] = {
+					tx: changesArray[i].tx,
+					tn: changesArray[i].tn,
+					ta: changesArray[i].ta,
+					pp: changesArray[i].pp,
+					accept: true
+				};
+			}
+		}
+	}
 
 	async function handleAccordionChange(key) {
 		if ((await key) == null) {
@@ -63,26 +82,16 @@
 			)
 		) {
 			tempObject.accept = tempObject.tx || tempObject.tn || tempObject.ta || tempObject.pp;
-			change =
-				sId +
-				' ' +
-				(tempObject.tx === 'N/A'
-					? ''
-					: 'TX; ' + data[0][0] + '~! -> ' + data[0][0] + (tempObject.tx ? '!' : '')) +
-				' ' +
-				(tempObject.tn === 'N/A'
-					? ''
-					: 'TN; ' + data[1][0] + '~! -> ' + data[1][0] + (tempObject.tn ? '!' : '')) +
-				' ' +
-				(tempObject.ta === 'N/A'
-					? ''
-					: 'TA; ' + data[2][0] + '~! -> ' + data[2][0] + (tempObject.ta ? '!' : '')) +
-				' ' +
-				(tempObject.pp === 'N/A'
-					? ''
-					: 'PP; ' + data[3][0] + '~! -> ' + data[3][0] + (tempObject.pp ? '!' : ''));
+			change = {
+				sId: sId,
+				tx: tempObject.tx === 'N/A' ? null : tempObject.tx,
+				tn: tempObject.tn === 'N/A' ? null : tempObject.tn,
+				ta: tempObject.ta === 'N/A' ? null : tempObject.ta,
+				pp: tempObject.pp === 'N/A' ? null : tempObject.pp,
+				data: [data[0][0], data[1][0], data[2][0], data[3][0]]
+			};
+
 			changesArray[n] = change;
-			console.log(changesArray);
 		}
 		cardTrackerArray[n] = tempObject;
 	}
@@ -95,34 +104,6 @@
 
 <div class="join join-vertical w-full max-h-[60vh] overflow-y-scroll">
 	<ul>
-		<!-- <Accordion bind:key>
-		{#each data.item as { nIds, uid, elev, sId, ll, postal, data, slimit, name }, n}
-			<AccordionItem key={ll}>
-				<h2 slot="header">{postal + ' ' + name}</h2>
-				<div slot="body">
-					{#each data as [qcdatafigure, num1, num2], i}
-						{#if dataorder[i] == 'PP'}
-							{#if qcdatafigure > slimit.PP}
-								<p>{dataorder[i]}</p>
-								<p>{qcdatafigure + '~! (' + 0 + ', ' + slimit[dataorder[i]] + ')'}</p>
-							{/if}
-						{:else if qcdatafigure < slimit[dataorder[i]][0] || qcdatafigure > slimit[dataorder[i]][1]}
-							<p>{dataorder[i]}</p>
-							<p>
-								{qcdatafigure +
-									'~! (' +
-									slimit[dataorder[i]][0] +
-									', ' +
-									slimit[dataorder[i]][1] +
-									')'}
-							</p>
-						{/if}
-					{/each}
-				</div>
-			</AccordionItem>
-		{/each}
-	</Accordion> -->
-
 		{#each data.item as { nIds, uid, elev, sId, ll, postal, data, slimit, name }, n}
 			<div
 				class={typeof cardTrackerArray[n].accept !== 'undefined'
@@ -138,20 +119,40 @@
 					{postal + ' ' + name}
 				</div>
 				<div class="collapse-content">
+					<!-- toDataFlag : function (vName, datum) {
+        var d = datum[0], f = datum[1], s = '';
+        if (f == 0) { s = ''; }
+        else if ((f & 0x0800) == 0x0800) { s = 'M'; }
+        else if ((f & 0x0001) == 0x0001) { s = 'T'; }
+        else if (vName == 'PP') { s = (d/100).toString(); }
+        else { s = d.toString(); }
+        if ( (f & 0x00ff0000) != 0 ) { s += '~'; } <- this is the error
+        if ( (f & 0x00010000) == 0x00010000 ) { s += '!'; }
+        return s;
+
+		upgrade to sveltekit 1.24
+    }, -->
 					{#each data as [qcdatafigure, num1, num2], i}
 						{#if dataorder[i] == 'PP'}
-							{#if num1 == 554008576 || num1 == 545259520 || num1 == 537133056 || num1 == 554009600 || num1 == 553911296}
+							{#if (num1 & 0x00ff0000) != 0}
 								<div class="flex flex-row justify-between mb-2">
 									<div>
 										<p>{dataorder[i]}</p>
 										<p>{qcdatafigure + '~! (' + 0 + ', ' + slimit[dataorder[i]] + ')'}</p>
 									</div>
-									<QcAcceptReject {handleAcceptReject} {n} {i} {sId} {data} />
+									<QcAcceptReject
+										{handleAcceptReject}
+										{n}
+										{i}
+										{sId}
+										{data}
+										accepted={cardTrackerArray[n] == undefined ? null : cardTrackerArray[n].pp}
+									/>
 								</div>
 							{:else}
 								<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>
 							{/if}
-						{:else if num1 == 554008576 || num1 == 545259520 || num1 == 537133056 || num1 == 554009600 || num1 == 553911296}
+						{:else if num1 & 0x00ff0000}
 							<div class="flex flex-row justify-between mb-2">
 								<div>
 									<p>{dataorder[i]}</p>
@@ -166,7 +167,16 @@
 											: qcdatafigure + '~! '}
 									</p>
 								</div>
-								<QcAcceptReject {handleAcceptReject} {n} {i} {sId} {data} />
+								<QcAcceptReject
+									{handleAcceptReject}
+									{n}
+									{i}
+									{sId}
+									{data}
+									accepted={cardTrackerArray[n] == undefined
+										? null
+										: cardTrackerArray[n][dataorder[i].toLowerCase()]}
+								/>
 							</div>
 						{:else}
 							<div>{handleAcceptRejectNA('N/A', n, i, sId, data)}</div>

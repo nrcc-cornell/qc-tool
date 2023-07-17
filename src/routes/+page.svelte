@@ -8,9 +8,6 @@
 	import MarkerPopup from '../components/map/MarkerPopup.svelte';
 	let map;
 
-	let allChangesArray = {};
-	let changesArray = [];
-
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
 
 	let dataorder = ['TX', 'TN', 'TA', 'PP'];
@@ -24,7 +21,16 @@
 	let currentDay = zeroPad(currentDate.getDate(), 2);
 	let currentYear = zeroPad(currentDate.getFullYear(), 4);
 
-	$: changesArray, (allChangesArray[currentDate.toDateString()] = changesArray);
+	let allChangesArray = {};
+	let changesArray = [];
+
+	$: changesArray, onChangeArrayChange();
+
+	function onChangeArrayChange() {
+		if (typeof allChangesArray[currentDate.toDateString()] != undefined) {
+			allChangesArray[currentDate.toDateString()] = changesArray;
+		}
+	}
 
 	let loggedIn = false;
 	let user = {
@@ -66,16 +72,14 @@
 	/* calendar functions */
 
 	const onDateChange = (newDate) => {
-		if (allChangesArray[currentDate] == []) {
-			delete allChangesArray[currentDate];
-			console.log(allChangesArray);
-		}
 		currentDate = newDate;
 		currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 		currentDay = zeroPad(currentDate.getDate(), 2);
 		currentYear = zeroPad(currentDate.getFullYear(), 4);
-		if (typeof allChangesArray[currentDate] == undefined) {
-			allChangesArray[currentDate] = [];
+		if (allChangesArray[currentDate.toDateString()] == null) {
+			changesArray = [];
+		} else {
+			changesArray = allChangesArray[currentDate.toDateString()];
 		}
 		QCdata = loadData().then((data) => generateMarkers(data));
 	};
@@ -338,7 +342,7 @@
 				</div>
 				<div class="m-4 card lg:card-side bg-base-100 shadow-xl" id="changes-container">
 					<button
-						class={Object.values(changesArray).length == 0 || !loggedIn
+						class={Object.values(allChangesArray).length == 0 || !loggedIn
 							? 'btn w-full btn-primary btn-disabled'
 							: 'btn w-full btn-primary'}
 						onclick="my_modal_1.showModal()">Submit</button
@@ -346,21 +350,57 @@
 					<dialog id="my_modal_1" class="modal">
 						<form method="dialog" class="modal-box">
 							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-							<h3 class="text-2xl font-bold text-gray-900 dark:text-white pb-2">
+							<h3 class="text-2xl font-bold text-gray-900 dark:text-white pb-4">
 								Are you sure you would like to submit the following changes:
 							</h3>
 							{#each Object.entries(allChangesArray) as [date, changes], i}
-								<h2 class="text-xl font-semibold text-gray-900 dark:text-white pb-2">
-									{date}
-								</h2>
-								{#each changes as change, i}
-									{#if typeof change !== 'undefined'}
-										<p class="text-base text-gray-900 dark:text-white">{change}</p>
-									{/if}
-								{/each}
+								{#if Object.values(changes).length != 0}
+									<h2 class="text-xl font-semibold text-gray-900 dark:text-white pb-2">
+										{date}
+									</h2>
+									{#each changes as change, i}
+										{#if typeof change !== 'undefined'}
+											<p class="text-base text-gray-900 dark:text-white">
+												{change.sId +
+													' ' +
+													(change.tx === null
+														? ''
+														: 'TX; ' +
+														  change.data[0] +
+														  '~! -> ' +
+														  change.data[0] +
+														  (change.tx ? '!' : '')) +
+													' ' +
+													(change.tn === null
+														? ''
+														: 'TN; ' +
+														  change.data[1] +
+														  '~! -> ' +
+														  change.data[1] +
+														  (change.tn ? '!' : '')) +
+													' ' +
+													(change.ta === null
+														? ''
+														: 'TA; ' +
+														  change.data[2] +
+														  '~! -> ' +
+														  change.data[2] +
+														  (change.ta ? '!' : '')) +
+													' ' +
+													(change.pp === null
+														? ''
+														: 'PP; ' +
+														  change.data[3] +
+														  '~! -> ' +
+														  change.data[3] +
+														  (change.pp ? '!' : ''))}
+											</p>
+										{/if}
+									{/each}
+									<div class="divider" />
+								{/if}
 							{/each}
 							<div class="modal-action">
-								<!-- if there is a button in form, it will close the modal -->
 								<button class="btn btn-primary">Submit</button>
 							</div>
 						</form>

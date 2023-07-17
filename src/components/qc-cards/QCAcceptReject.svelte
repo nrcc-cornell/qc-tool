@@ -4,9 +4,10 @@
 	export let i;
 	export let sId;
 	export let data;
+	export let accepted;
 
-	let clicked = false;
-	let AoR = false;
+	let clicked = accepted == null ? false : true;
+	let AoR = accepted == null ? false : accepted;
 
 	function handleAcceptRejectButton(accept, n, i, sId, data) {
 		handleAcceptReject(accept, n, i, sId, data);
