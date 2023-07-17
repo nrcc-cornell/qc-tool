@@ -1,16 +1,12 @@
 <script>
-	import { DateInput } from 'date-picker-svelte';
+	import { DateInput, DatePicker } from 'date-picker-svelte';
 
 	import QCBoxList from '../components/qc-cards/QCBoxList.svelte';
-
-	import DatePicker from '../components/date-picker/DatePicker.svelte';
 
 	import L from 'leaflet?client';
 	import 'leaflet/dist/leaflet.css';
 	import MarkerPopup from '../components/map/MarkerPopup.svelte';
 	let map;
-
-	let changesArray = [];
 
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
 
@@ -24,6 +20,24 @@
 	let currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 	let currentDay = zeroPad(currentDate.getDate(), 2);
 	let currentYear = zeroPad(currentDate.getFullYear(), 4);
+
+	let allChangesArray = {};
+	let changesArray = [];
+
+	$: changesArray, onChangeArrayChange();
+
+	function onChangeArrayChange() {
+		if (typeof allChangesArray[currentDate.toDateString()] != undefined) {
+			allChangesArray[currentDate.toDateString()] = changesArray;
+		}
+	}
+
+	let loggedIn = false;
+	let user = {
+		username: '',
+		password: '',
+		org: ''
+	};
 
 	/* data loading functions */
 
@@ -62,6 +76,11 @@
 		currentMonth = zeroPad(currentDate.getMonth() + 1, 2);
 		currentDay = zeroPad(currentDate.getDate(), 2);
 		currentYear = zeroPad(currentDate.getFullYear(), 4);
+		if (allChangesArray[currentDate.toDateString()] == null) {
+			changesArray = [];
+		} else {
+			changesArray = allChangesArray[currentDate.toDateString()];
+		}
 		QCdata = loadData().then((data) => generateMarkers(data));
 	};
 
@@ -130,13 +149,15 @@
 
 	function createMarker(loc, datalabel, isTemp) {
 		let icon = markerIcon(datalabel, isTemp);
-		let marker = L.marker(loc, { icon });
+		let zindex = 0;
+		if (isTemp == false) {
+			zindex = 1000;
+		}
+		let marker = L.marker(loc, { icon, zIndexOffset: zindex });
 		bindPopup(marker, (m) => {
 			let c = new MarkerPopup({
 				target: m,
-				props: {
-					datalabel
-				}
+				props: { datalabel }
 			});
 		});
 
@@ -214,74 +235,178 @@
 			createMarkers();
 		}
 	}
+
+	function handleLogin() {
+		if (user.username !== '') {
+			loggedIn = true;
+		}
+	}
 </script>
 
 <svelte:window on:resize={resizeMap} />
-<h2>Login will go here</h2>
-<div class="h-screen">
-	<DateInput
-		bind:value={currentDate}
-		placeholder={placeholderDate}
-		closeOnSelection={true}
-		format={'MM-dd-yyyy'}
-		max={placeholderDate}
-	/>
-	{#await QCdata}
-		<p>Loading...</p>
-	{:then data}
-		<div class="flex justify-between flex-row h-screen">
-			<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray />
-			<div style="height:40rem;width:70%;margin:2rem;">
-				<div class="flex join">
-					<input
-						class="join-item w-1/4 btn"
-						type="radio"
-						name="options"
-						aria-label="TMAX"
-						bind:group={currentDataSelected}
-						value={0}
-					/>
-					<input
-						class="join-item w-1/4 btn"
-						type="radio"
-						name="options"
-						aria-label="TMIN"
-						bind:group={currentDataSelected}
-						value={1}
-					/>
-					<input
-						class="join-item w-1/4 btn"
-						type="radio"
-						name="options"
-						aria-label="TOBS"
-						bind:group={currentDataSelected}
-						value={2}
-					/>
-					<input
-						class="join-item w-1/4 btn"
-						type="radio"
-						name="options"
-						aria-label="PRCP"
-						bind:group={currentDataSelected}
-						value={3}
-					/>
+<html data-theme="light" lang="html">
+	<div class="max-h-screen">
+		{#if loggedIn}
+			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
+				<div class="text-xl font-medium mr-10 ml-8">
+					Welcome {user.username}! Please make QC changes on the left, using the map on the right as
+					a reference. When finished, please press 'Submit'!
 				</div>
+			</div>
+		{:else}
+			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
+				<div class="text-xl font-medium mr-10 ml-8">Welcome! Please Log in here:</div>
+				<input
+					type="text"
+					placeholder="Username"
+					class="input input-bordered w-full max-w-xs mx-2"
+					bind:value={user.username}
+				/>
+				<input
+					type="password"
+					placeholder="Password"
+					class="input input-bordered w-full max-w-xs mx-2"
+					bind:value={user.password}
+				/>
+				<select class="select select-bordered w-full max-w-xs mx-2" bind:value={user.org}>
+					<option disabled selected>Select One</option>
+					<option>HPRCC</option>
+					<option>MRCC</option>
+					<option>NRCC</option>
+					<option>SERCC</option>
+					<option>SRCC</option>
+					<option>WRCC</option>
+				</select>
+				<button class="btn btn-primary" on:click={handleLogin}>Login</button>
+			</div>
+		{/if}
 
-				<div style="height:40rem;width:100%;margin:0rem;" use:mapAction />
-				{#each changesArray as change, i}
-					{#if typeof change !== 'undefined'}
-						<p>{change}</p>
-					{/if}
-				{/each}
+		<div class="flex flex-row grow" id="main-content-container">
+			<div class="ml-4 shrink overflow-y-hidden basis-1/4" id="cal-cards-container">
+				<div class="m-4 card card-normal bg-base-100 shadow-xl" id="cal-container">
+					<DatePicker bind:value={currentDate} max={placeholderDate} />
+				</div>
+				{#await QCdata}
+					<span class="loading loading-spinner loading-lg" />
+				{:then data}
+					<div class="m-4 card card-normal bg-base-100 shadow-xl" id="qc-list-container">
+						<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray />
+					</div>
+				{/await}
+			</div>
+			<div class="grow m-4 mt-0 mr-8 basis-3/4" id="map-changes-container">
+				<div class="m-4 card card-normal bg-base-100 shadow-xl" id="map-mapbar-container">
+					<div class="card-body">
+						<div class="flex join mb-4">
+							<input
+								class="join-item w-1/4 btn"
+								type="radio"
+								name="options"
+								aria-label="TMAX"
+								bind:group={currentDataSelected}
+								value={0}
+							/>
+							<input
+								class="join-item w-1/4 btn"
+								type="radio"
+								name="options"
+								aria-label="TMIN"
+								bind:group={currentDataSelected}
+								value={1}
+							/>
+							<input
+								class="join-item w-1/4 btn"
+								type="radio"
+								name="options"
+								aria-label="TOBS"
+								bind:group={currentDataSelected}
+								value={2}
+							/>
+							<input
+								class="join-item w-1/4 btn"
+								type="radio"
+								name="options"
+								aria-label="PRCP"
+								bind:group={currentDataSelected}
+								value={3}
+							/>
+						</div>
+						{#await QCdata}
+							<div class="p-72">
+								<span class="loading loading-spinner loading-lg text-primary" />
+							</div>
+						{:then data}
+							<div style="height:40rem;width:100%;margin:0rem;border-radius:1rem;" use:mapAction />
+						{/await}
+					</div>
+				</div>
+				<div class="m-4 card lg:card-side bg-base-100 shadow-xl" id="changes-container">
+					<button
+						class={Object.values(allChangesArray).length == 0 || !loggedIn
+							? 'btn w-full btn-primary btn-disabled'
+							: 'btn w-full btn-primary'}
+						onclick="my_modal_1.showModal()">Submit</button
+					>
+					<dialog id="my_modal_1" class="modal">
+						<form method="dialog" class="modal-box">
+							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+							<h3 class="text-2xl font-bold text-gray-900 dark:text-white pb-4">
+								Are you sure you would like to submit the following changes:
+							</h3>
+							{#each Object.entries(allChangesArray) as [date, changes], i}
+								{#if Object.values(changes).length != 0}
+									<h2 class="text-xl font-semibold text-gray-900 dark:text-white pb-2">
+										{date}
+									</h2>
+									{#each changes as change, i}
+										{#if typeof change !== 'undefined'}
+											<p class="text-base text-gray-900 dark:text-white">
+												{change.sId +
+													' ' +
+													(change.tx === null
+														? ''
+														: 'TX; ' +
+														  change.data[0] +
+														  '~! -> ' +
+														  change.data[0] +
+														  (change.tx ? '!' : '')) +
+													' ' +
+													(change.tn === null
+														? ''
+														: 'TN; ' +
+														  change.data[1] +
+														  '~! -> ' +
+														  change.data[1] +
+														  (change.tn ? '!' : '')) +
+													' ' +
+													(change.ta === null
+														? ''
+														: 'TA; ' +
+														  change.data[2] +
+														  '~! -> ' +
+														  change.data[2] +
+														  (change.ta ? '!' : '')) +
+													' ' +
+													(change.pp === null
+														? ''
+														: 'PP; ' +
+														  change.data[3] +
+														  '~! -> ' +
+														  change.data[3] +
+														  (change.pp ? '!' : ''))}
+											</p>
+										{/if}
+									{/each}
+									<div class="divider" />
+								{/if}
+							{/each}
+							<div class="modal-action">
+								<button class="btn btn-primary">Submit</button>
+							</div>
+						</form>
+					</dialog>
+				</div>
 			</div>
 		</div>
-	{/await}
-</div>
-
-<style>
-	.card-map-container {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-between;
-	}
-</style>
+	</div>
+</html>
