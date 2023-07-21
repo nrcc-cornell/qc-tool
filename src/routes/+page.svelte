@@ -67,7 +67,6 @@
 		});
 
 		const item = await res.json();
-		console.log('data gotten');
 		return item;
 	}
 
@@ -236,7 +235,6 @@
 		let newDatalabel = null;
 		multiStnMarkerLayer.clearLayers();
 		if (isZoomed) {
-			console.log('starting markers');
 			let multiStnMarkerData = await loadMultiStnData(coords);
 			for (let datapoint of multiStnMarkerData.data) {
 				newLocation = [datapoint.meta.ll[1], datapoint.meta.ll[0]];
@@ -248,7 +246,6 @@
 
 		multiStnMarkerLayer.addTo(map);
 		markerLayers.addTo(map);
-		console.log('should be rendered');
 	}
 
 	function rerenderMarkers() {
