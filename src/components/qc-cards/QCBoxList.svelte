@@ -6,7 +6,7 @@
 	export let currentDataSelected;
 	export let changesArray;
 	let dataorder = ['TX', 'TN', 'TA', 'PP'];
-	let key = null;
+	export let key;
 	$: key, handleAccordionChange(key);
 	$: currentDataSelected, handleAccordionChange(key);
 

@@ -24,6 +24,8 @@
 	let allChangesArray = {};
 	let changesArray = [];
 
+	let key = null;
+
 	$: changesArray, onChangeArrayChange();
 
 	function onChangeArrayChange() {
@@ -63,7 +65,9 @@
 				'Content-Type': 'application/json'
 			}
 		});
+
 		const item = await res.json();
+		console.log('data gotten');
 		return item;
 	}
 
@@ -111,12 +115,17 @@
 
 	// Create a popup with a Svelte component inside it and handle removal when the popup is torn down.
 	// `createFn` will be called whenever the popup is being created, and should create and return the component.
-	function bindPopup(marker, createFn) {
+	function bindPopup(marker, createFn, loc) {
 		let popupComponent;
 		marker.bindPopup(() => {
 			let container = L.DomUtil.create('div');
 			popupComponent = createFn(container);
 			return container;
+		});
+
+		marker.on('popupopen', function () {
+			mapFly(loc, true);
+			key = [loc[1], loc[0]];
 		});
 
 		marker.on('popupclose', () => {
@@ -154,12 +163,16 @@
 			zindex = 1000;
 		}
 		let marker = L.marker(loc, { icon, zIndexOffset: zindex });
-		bindPopup(marker, (m) => {
-			let c = new MarkerPopup({
-				target: m,
-				props: { datalabel }
-			});
-		});
+		bindPopup(
+			marker,
+			(m) => {
+				let c = new MarkerPopup({
+					target: m,
+					props: { datalabel }
+				});
+			},
+			loc
+		);
 
 		return marker;
 	}
@@ -185,11 +198,16 @@
 	function mapAction(container) {
 		map = createMap(container);
 		createMarkers(map);
-		map.on('zoom', function () {
+		map.on('zoomend', function () {
 			if (map.getZoom() < 7) {
 				if (map.hasLayer(multiStnMarkerLayer)) {
 					map.removeLayer(multiStnMarkerLayer);
 				}
+			}
+		});
+		map.on('zoomstart', function () {
+			if (map.hasLayer(multiStnMarkerLayer)) {
+				map.removeLayer(multiStnMarkerLayer);
 			}
 		});
 		return {
@@ -218,6 +236,7 @@
 		let newDatalabel = null;
 		multiStnMarkerLayer.clearLayers();
 		if (isZoomed) {
+			console.log('starting markers');
 			let multiStnMarkerData = await loadMultiStnData(coords);
 			for (let datapoint of multiStnMarkerData.data) {
 				newLocation = [datapoint.meta.ll[1], datapoint.meta.ll[0]];
@@ -226,8 +245,10 @@
 				multiStnMarkerLayer.addLayer(n);
 			}
 		}
+
 		multiStnMarkerLayer.addTo(map);
 		markerLayers.addTo(map);
+		console.log('should be rendered');
 	}
 
 	function rerenderMarkers() {
@@ -290,7 +311,7 @@
 					<span class="loading loading-spinner loading-lg" />
 				{:then data}
 					<div class="m-4 card card-normal bg-base-100 shadow-xl" id="qc-list-container">
-						<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray />
+						<QCBoxList {data} {mapFly} {currentDataSelected} bind:changesArray bind:key />
 					</div>
 				{/await}
 			</div>
