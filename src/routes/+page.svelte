@@ -1,11 +1,18 @@
 <script>
 	import { DateInput, DatePicker } from 'date-picker-svelte';
 
+	import { onMount } from 'svelte';
+
 	import QCBoxList from '../components/qc-cards/QCBoxList.svelte';
 
 	import L from 'leaflet?client';
 	import 'leaflet/dist/leaflet.css';
 	import MarkerPopup from '../components/map/MarkerPopup.svelte';
+
+	import LoginBar from '../components/login/LoginBar.svelte';
+	import MapSelectBar from '../components/map/MapSelectBar.svelte';
+	import SubmitButton from '../components/submission/SubmitButton.svelte';
+
 	let map;
 
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
@@ -70,7 +77,11 @@
 		return item;
 	}
 
-	let QCdata = loadData().then((data) => generateMarkers(data));
+	let QCdata;
+
+	onMount(async () => {
+		QCdata = loadData().then((data) => generateMarkers(data));
+	});
 
 	/* calendar functions */
 
@@ -125,6 +136,7 @@
 		marker.on('popupopen', function () {
 			mapFly(loc, true);
 			key = [loc[1], loc[0]];
+			console.log('loc ' + key);
 		});
 
 		marker.on('popupclose', () => {
@@ -264,41 +276,7 @@
 <svelte:window on:resize={resizeMap} />
 <html data-theme="light" lang="html">
 	<div class="max-h-screen">
-		{#if loggedIn}
-			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
-				<div class="text-xl font-medium mr-10 ml-8">
-					Welcome {user.username}! Please make QC changes on the left, using the map on the right as
-					a reference. When finished, please press 'Submit'!
-				</div>
-			</div>
-		{:else}
-			<div class="flex flex-row bg-base-300 p-2 items-center max-h-20 h-16" id="login-container">
-				<div class="text-xl font-medium mr-10 ml-8">Welcome! Please Log in here:</div>
-				<input
-					type="text"
-					placeholder="Username"
-					class="input input-bordered w-full max-w-xs mx-2"
-					bind:value={user.username}
-				/>
-				<input
-					type="password"
-					placeholder="Password"
-					class="input input-bordered w-full max-w-xs mx-2"
-					bind:value={user.password}
-				/>
-				<select class="select select-bordered w-full max-w-xs mx-2" bind:value={user.org}>
-					<option disabled selected>Select One</option>
-					<option>HPRCC</option>
-					<option>MRCC</option>
-					<option>NRCC</option>
-					<option>SERCC</option>
-					<option>SRCC</option>
-					<option>WRCC</option>
-				</select>
-				<button class="btn btn-primary" on:click={handleLogin}>Login</button>
-			</div>
-		{/if}
-
+		<LoginBar {loggedIn} {user} {handleLogin} />
 		<div class="flex flex-row grow" id="main-content-container">
 			<div class="ml-4 shrink overflow-y-hidden basis-1/4" id="cal-cards-container">
 				<div class="m-4 card card-normal bg-base-100 shadow-xl" id="cal-container">
@@ -315,40 +293,7 @@
 			<div class="grow m-4 mt-0 mr-8 basis-3/4" id="map-changes-container">
 				<div class="m-4 card card-normal bg-base-100 shadow-xl" id="map-mapbar-container">
 					<div class="card-body">
-						<div class="flex join mb-4">
-							<input
-								class="join-item w-1/4 btn"
-								type="radio"
-								name="options"
-								aria-label="TMAX"
-								bind:group={currentDataSelected}
-								value={0}
-							/>
-							<input
-								class="join-item w-1/4 btn"
-								type="radio"
-								name="options"
-								aria-label="TMIN"
-								bind:group={currentDataSelected}
-								value={1}
-							/>
-							<input
-								class="join-item w-1/4 btn"
-								type="radio"
-								name="options"
-								aria-label="TOBS"
-								bind:group={currentDataSelected}
-								value={2}
-							/>
-							<input
-								class="join-item w-1/4 btn"
-								type="radio"
-								name="options"
-								aria-label="PRCP"
-								bind:group={currentDataSelected}
-								value={3}
-							/>
-						</div>
+						<MapSelectBar bind:currentDataSelected />
 						{#await QCdata}
 							<div class="p-72">
 								<span class="loading loading-spinner loading-lg text-primary" />
@@ -359,70 +304,7 @@
 					</div>
 				</div>
 				<div class="m-4 card lg:card-side bg-base-100 shadow-xl" id="changes-container">
-					<button
-						class={Object.values(allChangesArray).length == 0 || !loggedIn
-							? 'btn w-full btn-primary btn-disabled'
-							: 'btn w-full btn-primary'}
-						onclick="my_modal_1.showModal()">Submit</button
-					>
-					<dialog id="my_modal_1" class="modal">
-						<form method="dialog" class="modal-box">
-							<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-							<h3 class="text-2xl font-bold text-gray-900 dark:text-white pb-4">
-								Are you sure you would like to submit the following changes:
-							</h3>
-							{#each Object.entries(allChangesArray) as [date, changes], i}
-								{#if Object.values(changes).length != 0}
-									<h2 class="text-xl font-semibold text-gray-900 dark:text-white pb-2">
-										{date}
-									</h2>
-									{#each changes as change, i}
-										{#if typeof change !== 'undefined'}
-											<p class="text-base text-gray-900 dark:text-white">
-												{change.sId +
-													' ' +
-													(change.tx === null
-														? ''
-														: 'TX; ' +
-														  change.data[0] +
-														  '~! -> ' +
-														  change.data[0] +
-														  (change.tx ? '!' : '')) +
-													' ' +
-													(change.tn === null
-														? ''
-														: 'TN; ' +
-														  change.data[1] +
-														  '~! -> ' +
-														  change.data[1] +
-														  (change.tn ? '!' : '')) +
-													' ' +
-													(change.ta === null
-														? ''
-														: 'TA; ' +
-														  change.data[2] +
-														  '~! -> ' +
-														  change.data[2] +
-														  (change.ta ? '!' : '')) +
-													' ' +
-													(change.pp === null
-														? ''
-														: 'PP; ' +
-														  change.data[3] +
-														  '~! -> ' +
-														  change.data[3] +
-														  (change.pp ? '!' : ''))}
-											</p>
-										{/if}
-									{/each}
-									<div class="divider" />
-								{/if}
-							{/each}
-							<div class="modal-action">
-								<button class="btn btn-primary">Submit</button>
-							</div>
-						</form>
-					</dialog>
+					<SubmitButton {allChangesArray} {loggedIn} />
 				</div>
 			</div>
 		</div>
