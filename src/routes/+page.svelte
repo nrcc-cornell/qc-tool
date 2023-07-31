@@ -13,6 +13,8 @@
 	import MapSelectBar from '../components/map/MapSelectBar.svelte';
 	import SubmitButton from '../components/submission/SubmitButton.svelte';
 
+	/* Initializing Variables */
+
 	let map;
 
 	const zeroPad = (num, places) => String(num).padStart(places, '0');
@@ -265,6 +267,8 @@
 			createMarkers();
 		}
 	}
+
+	/* login functions */
 
 	function handleLogin() {
 		if (user.username !== '') {

@@ -97,6 +97,7 @@
 		cardTrackerArray[n] = tempObject;
 	}
 
+	/* Dummy function for non-flagged data */
 	function handleAcceptRejectNA(accept, n, i, sId, data) {
 		handleAcceptReject(accept, n, i, sId, data);
 		return '';
